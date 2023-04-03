@@ -7,10 +7,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-
 import static org.miun.support.Constants.*;
-
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,7 +23,6 @@ public class Main {
         List<Date> commitDates = getCommitDates(localRepo, 4);
 
         System.out.println(commitDates.size());
-
 
         Date commitDate = commitDates.get(40);
 
@@ -76,7 +72,6 @@ public class Main {
             Git.cloneRepository()
                     .setURI(repoUrl)
                     .setDirectory(tempDir.toFile())
-                    .setCredentialsProvider(new UsernamePasswordCredentialsProvider("<username>", "<password>")) // Optional, if the repository is private
                     .call();
             return tempDir.toFile();
         } catch (IOException | GitAPIException e) {
