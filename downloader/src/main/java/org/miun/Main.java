@@ -36,8 +36,12 @@ public class Main {
         // Analyze with Designite
         analyzeWithDesignite(new File(DESIGNITE_JAR_PATH), localRepo, outputDirectory);
 
-        String architectureSmellsInputFile = new File(outputDirectory, "ArchitectureSmells.csv").getAbsolutePath();
-        DesigniteResults designiteResults = createSummary(architectureSmellsInputFile);
+//        String architectureSmellsInputFile = new File(outputDirectory, "ArchitectureSmells.csv").getAbsolutePath();
+//        Map<String, Integer> smellCounts = getSmellCounts(architectureSmellsInputFile);
+
+        String typeMetricsInputFile = new File(outputDirectory, "TypeMetrics.csv").getAbsolutePath();
+        double propagationCost = calculatePropagationCost(typeMetricsInputFile);
+        System.out.println(propagationCost);
 
 //        for (Date commitDate : commitDates) {
 //            // Checkout the commit
@@ -174,7 +178,7 @@ public class Main {
         }
     }
 
-    private static DesigniteResults createSummary(String inputFile) {
+    private static Map<String, Integer> getSmellCounts(String inputFile) {
         try (BufferedReader reader = new BufferedReader(new FileReader(inputFile))) {
             // Skip header
             reader.readLine();
@@ -193,12 +197,35 @@ public class Main {
                 }
             }
 
-            return new DesigniteResults(smellCounts);
+            return smellCounts;
         } catch (IOException e) {
             System.err.println("Error reading or writing CSV files: " + e.getMessage());
             System.exit(1);
             return null;
         }
+    }
+
+    private static double calculatePropagationCost(String typeMetricsCsvPath) {
+        int totalFanIn = 0;
+        int numberOfClasses = 0;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(typeMetricsCsvPath))) {
+            reader.readLine();  // skip header
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] columns = line.split(",");
+                int fanIn = Integer.parseInt(columns[12]);
+
+                totalFanIn += fanIn;
+                numberOfClasses++;
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading TypeMetrics.csv: " + e.getMessage());
+            System.exit(1);
+        }
+
+        return numberOfClasses != 0 ? (double) totalFanIn / (numberOfClasses * numberOfClasses) : 0.0;  // to avoid division by zero
     }
 }
 
