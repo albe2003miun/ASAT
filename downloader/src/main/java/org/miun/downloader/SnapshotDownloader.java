@@ -1,14 +1,14 @@
-package org.miun;
-
+package org.miun.downloader;
+import static org.miun.constants.Constants.*;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import static org.miun.support.Constants.*;
+import org.miun.downloader.exceptions.RepositoryAlreadyExistsException;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,22 +30,23 @@ public class SnapshotDownloader {
         this.repositories = repositories;
     }
 
-    public void download() {
+    public void download() throws RepositoryAlreadyExistsException {
         File baseSnapshotDirectory = new File(BASE_SNAPSHOT_DIRECTORY);
         if (!baseSnapshotDirectory.exists()) {
             baseSnapshotDirectory.mkdirs();
         }
 
         for (String repo : repositories) {
-            File localRepo = cloneRepo(repo);
-//            break;
-            List<Date> commitDates = getCommitDates(localRepo, 4);
             String repoName = getRepoNameFromUrl(repo);
-
             File repoOutputDirectory = new File(baseSnapshotDirectory, repoName);
-            if (!repoOutputDirectory.exists()) {
-                repoOutputDirectory.mkdirs();
+            if (repoOutputDirectory.exists()) {
+                throw new RepositoryAlreadyExistsException("Repository " + repoName + " is already exists.");
             }
+
+            repoOutputDirectory.mkdirs();
+
+            File localRepo = cloneRepo(repo);
+            List<Date> commitDates = getCommitDates(localRepo, 4);
 
             for (Date commitDate : commitDates) {
                 checkoutCommit(localRepo, commitDate);
@@ -77,7 +78,8 @@ public class SnapshotDownloader {
                             }
                         } catch (IOException e) {
                             System.err.println("Error saving snapshot: " + e.getMessage());
-                            System.exit(1);
+                            System.err.println("Source path: " + sourcePath);
+                            System.err.println("Target path: " + targetPath);
                         }
                     });
         } catch (IOException e) {

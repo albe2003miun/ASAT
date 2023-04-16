@@ -1,5 +1,4 @@
-package org.miun;
-
+package org.miun.downloader;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
@@ -12,12 +11,11 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-
+import static org.miun.constants.Constants.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import static org.miun.support.Constants.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,27 +28,27 @@ public class Main {
     public static void main(String[] args) throws IOException {
         String repoUrl = "https://github.com/apolloconfig/apollo";
         File localRepo = cloneRepo(repoUrl);
-//        List<Date> commitDates = getCommitDates(localRepo, 4);
-//
-//        System.out.println(commitDates.size());
-//
-//        Date commitDate = commitDates.get(40);
-//
-//        checkoutCommit(localRepo, commitDate);
-//
-//        File outputDirectory = new File(OUTPUT_DIRECTORY_PATH);
-//        if (!outputDirectory.exists()) {
-//            outputDirectory.mkdirs();
-//        }
-//
-//        // Analyze with Designite
-//        analyzeWithDesignite(new File(DESIGNITE_JAR_PATH), localRepo, outputDirectory);
-//
-//        String architectureSmellsInputFile = new File(outputDirectory, "ArchitectureSmells.csv").getAbsolutePath();
-//        Map<String, Integer> smellCounts = getSmellCounts(architectureSmellsInputFile);
-//
-//        String typeMetricsInputFile = new File(outputDirectory, "TypeMetrics.csv").getAbsolutePath();
-//        double propagationCost = calculatePropagationCost(typeMetricsInputFile);
+        List<Date> commitDates = getCommitDates(localRepo, 4);
+
+        System.out.println(commitDates.size());
+
+        Date commitDate = commitDates.get(40);
+
+        checkoutCommit(localRepo, commitDate);
+
+        File outputDirectory = new File(RESULTS_DIRECTORY);
+        if (!outputDirectory.exists()) {
+            outputDirectory.mkdirs();
+        }
+
+        // Analyze with Designite
+        analyzeWithDesignite(new File(DESIGNITE_JAR_PATH), localRepo, outputDirectory);
+
+        String architectureSmellsInputFile = new File(outputDirectory, "ArchitectureSmells.csv").getAbsolutePath();
+        Map<String, Integer> smellCounts = getSmellCounts(architectureSmellsInputFile);
+
+        String typeMetricsInputFile = new File(outputDirectory, "TypeMetrics.csv").getAbsolutePath();
+        double propagationCost = calculatePropagationCost(typeMetricsInputFile);
 
         buildProjectAndGenerateReport(localRepo);
     }
@@ -60,7 +58,7 @@ public class Main {
         runCommand(command1, repoDir, false);
 
         List<File> modules = findModules(repoDir);
-        File customReportsDir = new File(OUTPUT_DIRECTORY_PATH);
+        File customReportsDir = new File(RESULTS_DIRECTORY);
         if (!customReportsDir.exists()) {
             customReportsDir.mkdirs();
         }
