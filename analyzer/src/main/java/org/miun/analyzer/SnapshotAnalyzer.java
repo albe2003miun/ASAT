@@ -102,7 +102,7 @@ public class SnapshotAnalyzer {
     }
 
     private static void buildProjectAndGenerateReport(File repoDir, File baseOutputDirectory) {
-        String command1 = String.format("mvn clean test -DargLine=\"-javaagent:%s=destfile=target/jacoco.exec\"", JACOCO_AGENT_PATH);
+        String command1 = String.format("mvn clean test -Dmaven.test.failure.ignore=true -Djacoco.skip=false -Djacoco.dataFile=target/jacoco.exec -DargLine=\"-javaagent:%s=destfile=target/jacoco.exec\"", JACOCO_AGENT_PATH);
         CommandRunner.runCommand(command1, repoDir);
 
         List<File> modules = findModules(repoDir);
@@ -112,11 +112,12 @@ public class SnapshotAnalyzer {
         }
 
         for (File module : modules) {
-            if (new File(module, "target/jacoco.exec").exists()) {
+            File jacocoExecFile = new File(module, "target/jacoco.exec");
+            if (jacocoExecFile.exists()) {
                 String moduleName = module.getName();
                 File moduleReportFile = new File(resultsDirectory, moduleName + ".csv");
 
-                String reportCommand = String.format("java -jar %s report target/jacoco.exec --classfiles target/classes --sourcefiles src/main/java --csv %s", JACOCO_CLI_PATH, moduleReportFile.getAbsolutePath());
+                String reportCommand = String.format("java -jar %s report %s --classfiles %s --sourcefiles %s --csv %s", JACOCO_CLI_PATH, jacocoExecFile.getAbsolutePath(), new File(module, "target/classes").getAbsolutePath(), new File(module, "src/main/java").getAbsolutePath(), moduleReportFile.getAbsolutePath());
                 CommandRunner.runCommand(reportCommand, module);
             }
         }
