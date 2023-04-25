@@ -50,3 +50,4 @@ Thumbs.db
 
 # Local configuration file (uncomment if you need to ignore a specific configuration file)
 # local.properties
+/constants/src/main/resources/example_config.properties
