@@ -1,16 +1,45 @@
 package org.miun.constants;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
-public interface Constants {
-    String DESIGNITE_JAR_PATH = "/home/alexander/tools/DesigniteJava.jar";
-    String JACOCO_CLI_PATH = "/home/alexander/tools/jacococli.jar";
-    String RESULTS_DIRECTORY = "/home/alexander/dt133g-files/snapshot-results";
-    String JACOCO_AGENT_PATH = "/home/alexander/tools/jacocoagent.jar";
-    String BASE_SNAPSHOT_DIRECTORY = "/home/alexander/dt133g-files/snapshots";
-    List<String> OSS_PROJECTS = List.of("https://github.com/apolloconfig/apollo", "https://github.com/seata/seata",
-            "https://github.com/GoogleContainerTools/jib", "https://github.com/apache/dolphinscheduler", "https://github.com/karatelabs/karate",
-            "https://github.com/spring-cloud/spring-cloud-gateway", "https://github.com/apache/servicecomb-java-chassis",
-            "https://github.com/box/mojito", "https://github.com/piranhacloud/piranha", "https://github.com/strimzi/strimzi-kafka-operator");
+public class Constants {
+    public static String DESIGNITE_JAR_PATH;
+    public static String JACOCO_CLI_PATH;
+    public static String JACOCO_AGENT_PATH;
+    public static String BASE_SNAPSHOT_DIRECTORY;
+    public static String RESULTS_DIRECTORY;
+    public static List<String> OSS_PROJECTS;
+
+    static {
+        String configFilename = "config.properties";
+
+        try (InputStream configInput =
+                     Constants.class.getClassLoader().getResourceAsStream(configFilename)) {
+            Properties config = new Properties();
+
+            if (configInput == null) {
+                throw new IOException("Unable to find config.properties.");
+            }
+
+            config.load(configInput);
+
+            if (config.values().isEmpty()) {
+                throw new IllegalArgumentException("config.properties is empty.");
+            }
+
+            DESIGNITE_JAR_PATH = config.getProperty("designiteJarPath");
+            JACOCO_CLI_PATH = config.getProperty("jacocoCliPath");
+            JACOCO_AGENT_PATH = config.getProperty("jacocoAgentPath");
+            BASE_SNAPSHOT_DIRECTORY = config.getProperty("snapshotsDirectory");
+            RESULTS_DIRECTORY = config.getProperty("resultsDirectory");
+            OSS_PROJECTS = Arrays.asList(config.getProperty("projectUrls").split(","));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
 
