@@ -12,9 +12,11 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import static org.miun.constants.Constants.*;
 
@@ -71,6 +73,7 @@ public class SnapshotAnalyzer {
 
         analyzeWithDesignite(snapshot, snapshotResultsDirectory);
         buildProjectAndGenerateReport(snapshot, snapshotResultsDirectory);
+        analyzeWithDV8(snapshot, snapshotResultsDirectory);
     }
 
     private static void analyzeWithDesignite(File repoDir, File baseOutputDirectory) {
@@ -147,5 +150,38 @@ public class SnapshotAnalyzer {
             e.printStackTrace();
         }
         return modules;
+    }
+
+    private static void analyzeWithDV8(File repoDir, File baseOutputDir) {
+        Properties properties = new Properties();
+        String resultFolder = "DV8Results";
+
+//        properties.setProperty("inputFolder", repoDir.getAbsolutePath());
+        properties.setProperty("outputFolder", baseOutputDir.getAbsolutePath());
+        properties.setProperty("projectName", resultFolder);
+        properties.setProperty("sourceType", "code");
+        properties.setProperty("sourceCodePath", repoDir.getAbsolutePath());
+        properties.setProperty("sourceCodeLanguage", "java");
+
+        // Create a temporary file with the specified prefix and suffix
+        File propertiesFile = null;
+        try {
+            propertiesFile = File.createTempFile("config", ".properties");
+        } catch (IOException e) {
+            System.err.println("Error while creating the temporary properties file: " + e.getMessage());
+            return;
+        }
+
+        // Write the properties to the file
+        try (FileOutputStream outputStream = new FileOutputStream(propertiesFile)) {
+            properties.store(outputStream, "This is a sample properties file");
+            System.out.println("Properties file created successfully.");
+        } catch (IOException e) {
+            System.err.println("Error while writing to the properties file: " + e.getMessage());
+        }
+
+        String command = String.format("%s arch-report -paramsFile %s", DV8_CONSOLE, propertiesFile.getAbsolutePath());
+
+        CommandRunner.runCommand(command, repoDir);
     }
 }

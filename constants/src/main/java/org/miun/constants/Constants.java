@@ -12,5 +12,7 @@ public interface Constants {
             "https://github.com/GoogleContainerTools/jib", "https://github.com/apache/dolphinscheduler", "https://github.com/karatelabs/karate",
             "https://github.com/spring-cloud/spring-cloud-gateway", "https://github.com/apache/servicecomb-java-chassis",
             "https://github.com/box/mojito", "https://github.com/piranhacloud/piranha", "https://github.com/strimzi/strimzi-kafka-operator");
+
+    String DV8_CONSOLE = "/home/alexander/tools/DV8_std/bin/dv8-console";
 }
 
