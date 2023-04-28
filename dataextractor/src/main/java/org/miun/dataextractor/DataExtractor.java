@@ -118,7 +118,7 @@ public class DataExtractor {
             numberOfClasses++;
         }
 
-        return numberOfClasses != 0 ? (double) (totalFanIn + totalFanOut) / 2 / (numberOfClasses * numberOfClasses) : 0.0;  // to avoid division by zero
+        return numberOfClasses != 0 ? (double) ((totalFanIn + totalFanOut) / 2) / (numberOfClasses * numberOfClasses) : 0.0;  // to avoid division by zero
     }
 
     private static Map<String, List<TestCoverageData>> getSystemTestCoverageData(File snapshot) {
@@ -166,7 +166,7 @@ public class DataExtractor {
                 int startIndex = listItemText.indexOf("Decoupling Level is") + "Decoupling Level is".length();
                 int endIndex = listItemText.indexOf("%");
                 String decouplingLevelText = listItemText.substring(startIndex, endIndex).trim();
-                return Double.parseDouble(decouplingLevelText);
+                return Double.parseDouble(decouplingLevelText.replace(",","."));
             }
         }
         throw new IllegalStateException("Decoupling Level not found in the HTML content");
