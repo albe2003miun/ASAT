@@ -215,7 +215,7 @@ public class DataExtractor {
                 rowData.addAll(smellData);
                 int totalPackageSmells = smellData.stream().mapToInt(Integer::parseInt).sum();
                 rowData.add(Integer.toString(totalPackageSmells));
-                rowData.add(String.format("%.1f%%", calculatePackagePropagationCost(entry.getValue())));
+                rowData.add(String.format(Locale.US, "%.1f%%", calculatePackagePropagationCost(entry.getValue()) * 100));
                 rowData.add("null");
                 List<TestCoverageData> packageTestCoverageData = systemTestCoverageData.get(entry.getKey());
                 if (packageTestCoverageData == null) {
@@ -230,7 +230,7 @@ public class DataExtractor {
                         totalInstructionMissed += testCoverageData.instructionMissed();
                     }
                     double codeCoverage = (double) (instructionsCovered * 100) / (instructionsCovered + instructionsMissed);
-                    rowData.add(String.format("%.1f%%", codeCoverage));
+                    rowData.add(String.format(Locale.US, "%.1f%%", codeCoverage));
                 }
 
                 int loc = entry.getValue().stream().mapToInt(TypeMetricsData::loc).sum();
@@ -249,10 +249,10 @@ public class DataExtractor {
             }
             systemData.addAll(systemSmellData);
             systemData.add(Integer.toString(systemSmellCounts.values().stream().mapToInt(Integer::intValue).sum()));
-            systemData.add(String.format("%.1f%%", calculateSystemPropagationCost(systemFanInFanOutData) * 100));
-            systemData.add(String.format("%.1f%%", decouplingLevel));
+            systemData.add(String.format(Locale.US, "%.1f%%", calculateSystemPropagationCost(systemFanInFanOutData) * 100));
+            systemData.add(String.format(Locale.US, "%.1f%%", decouplingLevel));
             double codeCoverage = (double) (totalInstructionCovered * 100) / (totalInstructionCovered + totalInstructionMissed);
-            systemData.add(String.format("%.1f%%", codeCoverage));
+            systemData.add(String.format(Locale.US, "%.1f%%", codeCoverage));
             systemData.add(Integer.toString(totalLoc));
             int numOfClasses = systemFanInFanOutData.values().stream().mapToInt(List::size).sum();
             systemData.add(Integer.toString(numOfClasses));
