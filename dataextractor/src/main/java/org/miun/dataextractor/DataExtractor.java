@@ -108,34 +108,6 @@ public class DataExtractor {
         return systemFanInFanOutData;
     }
 
-    private static double calculateSystemPropagationCost(Map<String, List<TypeMetricsData>> systemFanInFanOutData) {
-        int totalFanIn = 0;
-        int numberOfClasses = 0;
-
-        for (List<TypeMetricsData> typeMetricsDataList : systemFanInFanOutData.values()) {
-            for (TypeMetricsData typeMetricsData : typeMetricsDataList) {
-                totalFanIn += typeMetricsData.fanIn();
-                numberOfClasses++;
-            }
-        }
-
-        return numberOfClasses != 0 ? (double) totalFanIn / (numberOfClasses * numberOfClasses) : 0.0;  // to avoid division by zero
-    }
-
-    private static double calculatePackagePropagationCost(List<TypeMetricsData> fanInFanOutData) {
-        int totalFanIn = 0;
-        int totalFanOut = 0;
-        int numberOfClasses = 0;
-
-        for (TypeMetricsData typeMetricsData : fanInFanOutData) {
-            totalFanIn += typeMetricsData.fanIn();
-            totalFanOut += typeMetricsData.fanOut();
-            numberOfClasses++;
-        }
-
-        return numberOfClasses != 0 ? (double) ((totalFanIn + totalFanOut) / 2) / (numberOfClasses * numberOfClasses) : 0.0;  // to avoid division by zero
-    }
-
     private static Map<String, List<TestCoverageData>> getSystemTestCoverageData(File snapshot) {
         Map<String, List<TestCoverageData>> systemTestCoverageData = new HashMap<>();
         File jacocoResults = new File(snapshot, "JacocoResults");
