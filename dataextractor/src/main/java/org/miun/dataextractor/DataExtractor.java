@@ -21,6 +21,7 @@ public class DataExtractor {
             "Scattered Functionality",
             "Unstable Dependency"
     );
+    private static final String ALL_PACKAGES_KEY = "<All packages>";
 
     public void generateOutputFiles() throws IOException {
         File snapshotResults = new File(RESULTS_DIRECTORY);
@@ -242,10 +243,19 @@ public class DataExtractor {
             }
 
             List<String> systemData = new ArrayList<>();
-            systemData.add("all");
+            systemData.add("all (includes smells in all packages)");
             List<String> systemSmellData = new ArrayList<>();
-            for (String uniqueSmell : uniqueSmells) {
-                systemSmellData.add(Integer.toString(systemSmellCounts.get(uniqueSmell)));
+
+            // add smells detected for all packages here since they are not included elsewhere
+            if (systemSmells.containsKey(ALL_PACKAGES_KEY)) {
+                systemSmellData.addAll(getPackageSmells(
+                        systemSmells, uniqueSmells, systemSmellCounts, ALL_PACKAGES_KEY));
+            }
+
+            for (int i = 0; i < uniqueSmells.size(); i++) {
+                systemSmellData.set(i, String.valueOf(
+                        systemSmellCounts.get(uniqueSmells.get(i))
+                ));
             }
             systemData.addAll(systemSmellData);
             systemData.add(Integer.toString(systemSmellCounts.values().stream().mapToInt(Integer::intValue).sum()));
