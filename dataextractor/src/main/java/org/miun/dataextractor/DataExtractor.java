@@ -3,6 +3,7 @@ package org.miun.dataextractor;
 import java.io.*;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -11,6 +12,15 @@ import org.jsoup.select.Elements;
 import static org.miun.constants.Constants.*;
 
 public class DataExtractor {
+    private static final List<String> ARCHITECTURAL_SMELLS = List.of(
+            "Ambiguous Interface",
+            "Cyclic Dependency",
+            "Dense Structure",
+            "Feature Concentration",
+            "God Component",
+            "Scattered Functionality",
+            "Unstable Dependency"
+    );
 
     public void generateOutputFiles() throws IOException {
         File snapshotResults = new File(RESULTS_DIRECTORY);
@@ -41,15 +51,15 @@ public class DataExtractor {
                 String architectureSmell = columns[2];
 
                 if (!systemSmells.containsKey(packageName)) {
-                    systemSmells.put(packageName, new HashMap<>(Map.of(architectureSmell, 1)));
-                } else {
-                    Map<String, Integer> smellCounts = systemSmells.get(packageName);
-                    if (!smellCounts.containsKey(architectureSmell)) {
-                        smellCounts.put(architectureSmell, 1);
-                    } else {
-                        smellCounts.replace(architectureSmell, smellCounts.get(architectureSmell) + 1);
-                    }
+                    systemSmells.put(
+                            packageName,
+                            ARCHITECTURAL_SMELLS.stream()
+                                    .collect(Collectors.toMap(Object::toString, s -> 0))
+                    );
                 }
+
+                Map<String, Integer> smellCounts = systemSmells.get(packageName);
+                smellCounts.replace(architectureSmell, smellCounts.get(architectureSmell) + 1);
             }
         } catch (IOException e) {
             System.err.println("Error reading ArchitectureSmells.csv: " + e.getMessage());
