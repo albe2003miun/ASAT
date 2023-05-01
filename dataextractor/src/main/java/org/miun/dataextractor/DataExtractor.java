@@ -12,6 +12,7 @@ import org.jsoup.select.Elements;
 import static org.miun.constants.Constants.*;
 
 public class DataExtractor {
+    // needs to be exactly as in results from used tools
     private static final List<String> ARCHITECTURAL_SMELLS = List.of(
             "Ambiguous Interface",
             "Cyclic Dependency",
@@ -22,6 +23,8 @@ public class DataExtractor {
             "Unstable Dependency"
     );
     private static final String ALL_PACKAGES_KEY = "<All packages>";
+    private static final String DECOUPLING_LEVEL = "Decoupling Level";
+    private static final String PROPAGATION_COST = "Propagation Cost";
 
     public void generateOutputFiles() throws IOException {
         File snapshotResults = new File(RESULTS_DIRECTORY);
@@ -31,8 +34,9 @@ public class DataExtractor {
                 Map<String, Map<String, Integer>> systemSmells = getSystemSmells(snapshot);
                 Map<String, List<TypeMetricsData>> systemFanInFanOutData = getSystemFanInFanOutData(snapshot);
                 Map<String, List<TestCoverageData>> systemTestCoverageData = getSystemTestCoverageData(snapshot);
-                double decouplingLevel = getDecouplingLevel(snapshot);
-                writeToCsv(new File(snapshot, "output.csv"), systemSmells, systemFanInFanOutData, systemTestCoverageData, decouplingLevel);
+                double decouplingLevel = getSystemMetric(snapshot, DECOUPLING_LEVEL);
+                double propagationCost = getSystemMetric(snapshot, PROPAGATION_COST);
+                writeToCsv(new File(snapshot, "output.csv"), systemSmells, systemFanInFanOutData, systemTestCoverageData, decouplingLevel, propagationCost);
             }
         }
     }
@@ -167,24 +171,28 @@ public class DataExtractor {
         return systemTestCoverageData;
     }
 
-    private static double getDecouplingLevel(File snapshot) throws IOException {
+    private static double getSystemMetric(File snapshot, String metric) throws IOException {
         File analysisSummary = new File(snapshot.getAbsolutePath() + "/DV8Results/dv8-analysis-result/analysis-summary.html");
         Document document = Jsoup.parse(analysisSummary, "UTF-8");
         Elements listItems = document.select("li");
         for (Element listItem: listItems) {
             String listItemText = listItem.text();
-            if (listItemText.contains("Decoupling Level")) {
-                int startIndex = listItemText.indexOf("Decoupling Level is") + "Decoupling Level is".length();
-                int endIndex = listItemText.indexOf("%");
-                String decouplingLevelText = listItemText.substring(startIndex, endIndex).trim();
-                return Double.parseDouble(decouplingLevelText.replace(",","."));
+            if (listItemText.contains(metric)) {
+                String match = metric + " is";
+                int startIndex = listItemText.indexOf(match) + match.length();
+                int relativeEndIndex = listItemText.substring(startIndex).indexOf("%");
+                int endIndex = startIndex + relativeEndIndex;
+                String metricText = listItemText.substring(startIndex, endIndex).trim();
+                return Double.parseDouble(metricText.replace(",","."));
             }
         }
-        throw new IllegalStateException("Decoupling Level not found in the HTML content");
+        throw new IllegalStateException("Metric not found in the HTML content");
     }
 
-    private static void writeToCsv(File outputFile, Map<String, Map<String, Integer>> systemSmells, Map<String,
-            List<TypeMetricsData>> systemFanInFanOutData, Map<String, List<TestCoverageData>> systemTestCoverageData, double decouplingLevel) {
+    private static void writeToCsv(File outputFile, Map<String, Map<String, Integer>> systemSmells,
+            Map<String, List<TypeMetricsData>> systemFanInFanOutData,
+            Map<String, List<TestCoverageData>> systemTestCoverageData,
+            double decouplingLevel, double propagationCost) {
         String filePath = outputFile.getAbsolutePath();
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
@@ -259,7 +267,7 @@ public class DataExtractor {
             }
             systemData.addAll(systemSmellData);
             systemData.add(Integer.toString(systemSmellCounts.values().stream().mapToInt(Integer::intValue).sum()));
-            systemData.add(String.format(Locale.US, "%.2f%%", calculateSystemPropagationCost(systemFanInFanOutData) * 100));
+            systemData.add(String.format(Locale.US, "%.2f%%", propagationCost));
             systemData.add(String.format(Locale.US, "%.2f%%", decouplingLevel));
             double codeCoverage = (double) (totalInstructionCovered * 100) / (totalInstructionCovered + totalInstructionMissed);
             systemData.add(String.format(Locale.US, "%.2f%%", codeCoverage));
