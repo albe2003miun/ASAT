@@ -211,17 +211,7 @@ public class DataExtractor {
             for (Map.Entry<String, List<TypeMetricsData>> entry : systemFanInFanOutData.entrySet()) {
                 List<String> rowData = new ArrayList<>();
                 rowData.add(entry.getKey());  // package name
-                List<String> smellData = new ArrayList<>();
-                Map<String, Integer> smellCounts = systemSmells.get(entry.getKey());
-                for (String smell : uniqueSmells) {
-                    if (smellCounts == null) {
-                        smellData.add(Integer.toString(0));
-                    } else {
-                        int count = smellCounts.getOrDefault(smell, 0);
-                        systemSmellCounts.put(smell, systemSmellCounts.get(smell) + count);
-                        smellData.add(Integer.toString(count));
-                    }
-                }
+                List<String> smellData = getPackageSmells(systemSmells, uniqueSmells, systemSmellCounts, entry.getKey());
                 rowData.addAll(smellData);
                 int totalPackageSmells = smellData.stream().mapToInt(Integer::parseInt).sum();
                 rowData.add(Integer.toString(totalPackageSmells));
@@ -271,6 +261,29 @@ public class DataExtractor {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    // also puts the smells into SystemSmellCounts
+    private static List<String> getPackageSmells(
+            Map<String, Map<String, Integer>> systemSmells,
+            List<String> uniqueSmells,
+            Map<String, Integer> systemSmellCounts,
+            String entry
+    ) {
+        List<String> smellData = new ArrayList<>();
+        Map<String, Integer> smellCounts = systemSmells.get(entry);
+
+        for (String smell : uniqueSmells) {
+            if (smellCounts == null) {
+                smellData.add(Integer.toString(0));
+            } else {
+                int count = smellCounts.getOrDefault(smell, 0);
+                systemSmellCounts.put(smell, systemSmellCounts.get(smell) + count);
+                smellData.add(Integer.toString(count));
+            }
+        }
+
+        return smellData;
     }
 
     private static List<String> getUniqueSmells(Map<String, Map<String, Integer>> systemSmells) {
