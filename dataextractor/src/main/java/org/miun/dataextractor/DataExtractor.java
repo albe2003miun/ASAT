@@ -224,7 +224,7 @@ public class DataExtractor {
                 rowData.addAll(smellData);
                 int totalPackageSmells = smellData.stream().mapToInt(Integer::parseInt).sum();
                 rowData.add(Integer.toString(totalPackageSmells));
-                rowData.add(String.format(Locale.US, "%.2f%%", calculatePackagePropagationCost(entry.getValue()) * 100));
+                rowData.add("null");
                 rowData.add("null");
                 List<TestCoverageData> packageTestCoverageData = systemTestCoverageData.get(entry.getKey());
                 if (packageTestCoverageData == null) {
