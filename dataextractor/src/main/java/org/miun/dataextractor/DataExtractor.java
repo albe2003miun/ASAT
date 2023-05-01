@@ -224,11 +224,11 @@ public class DataExtractor {
                 rowData.addAll(smellData);
                 int totalPackageSmells = smellData.stream().mapToInt(Integer::parseInt).sum();
                 rowData.add(Integer.toString(totalPackageSmells));
-                rowData.add("null");
-                rowData.add("null");
+                rowData.add("");
+                rowData.add("");
                 List<TestCoverageData> packageTestCoverageData = systemTestCoverageData.get(entry.getKey());
                 if (packageTestCoverageData == null) {
-                    rowData.add("null");
+                    rowData.add("");
                 } else {
                     int instructionsCovered = 0;
                     int instructionsMissed = 0;
