@@ -106,7 +106,7 @@ public class SnapshotAnalyzer {
 
     private static void buildProjectAndGenerateReport(File repoDir, File baseOutputDirectory) {
         String command1 = String.format("mvn clean test -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dmaven.test.failure.ignore=true -Djacoco.skip=false -Djacoco.dataFile=target/jacoco.exec -DargLine=\"-javaagent:%s=destfile=target/jacoco.exec\"", JACOCO_AGENT_PATH);
-        CommandRunner.runCommand(command1, repoDir);
+        CommandRunner.runTestCommand(command1, repoDir, new File(baseOutputDirectory, "testdata.csv"));
 
         List<File> modules = findModules(repoDir);
         File resultsDirectory = new File(baseOutputDirectory, "JacocoResults");
@@ -121,7 +121,7 @@ public class SnapshotAnalyzer {
                 File moduleReportFile = new File(resultsDirectory, moduleName + ".csv");
 
                 String reportCommand = String.format("java -jar %s report %s --classfiles %s --sourcefiles %s --csv %s", JACOCO_CLI_PATH, jacocoExecFile.getAbsolutePath(), new File(module, "target/classes").getAbsolutePath(), new File(module, "src/main/java").getAbsolutePath(), moduleReportFile.getAbsolutePath());
-                CommandRunner.runCommand(reportCommand, module);
+                CommandRunner.runStandardCommand(reportCommand, module);
             }
         }
     }
@@ -182,6 +182,6 @@ public class SnapshotAnalyzer {
 
         String command = String.format("%s arch-report -paramsFile %s", DV8_CONSOLE, propertiesFile.getAbsolutePath());
 
-        CommandRunner.runCommand(command, repoDir);
+        CommandRunner.runStandardCommand(command, repoDir);
     }
 }
