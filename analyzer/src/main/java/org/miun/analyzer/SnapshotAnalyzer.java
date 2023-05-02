@@ -105,7 +105,7 @@ public class SnapshotAnalyzer {
     }
 
     private static void buildProjectAndGenerateReport(File repoDir, File baseOutputDirectory) {
-        String command1 = String.format("mvn clean test -Dmaven.test.failure.ignore=true -Djacoco.skip=false -Djacoco.dataFile=target/jacoco.exec -DargLine=\"-javaagent:%s=destfile=target/jacoco.exec\"", JACOCO_AGENT_PATH);
+        String command1 = String.format("mvn clean test -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dmaven.test.failure.ignore=true -Djacoco.skip=false -Djacoco.dataFile=target/jacoco.exec -DargLine=\"-javaagent:%s=destfile=target/jacoco.exec\"", JACOCO_AGENT_PATH);
         CommandRunner.runCommand(command1, repoDir);
 
         List<File> modules = findModules(repoDir);
