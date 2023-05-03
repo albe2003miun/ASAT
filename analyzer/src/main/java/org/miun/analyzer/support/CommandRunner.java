@@ -54,6 +54,11 @@ public class CommandRunner {
                             }
                         }
 
+                        totalTestsRun = totalTestsRun / 2;
+                        totalTestsFailures = totalTestsFailures / 2;
+                        totalTestsErrors = totalTestsErrors / 2;
+                        totalTestsSkipped = totalTestsSkipped / 2;
+
                         int totalSuccessfulTests = totalTestsRun - totalTestsFailures - totalTestsErrors - totalTestsSkipped;
                         double successPercentage = totalTestsRun != 0 ? ((double) totalSuccessfulTests / totalTestsRun) * 100 : -1.0;
                         writer.write(String.format("%d,%d,%d,%d,%d,%.2f", totalSuccessfulTests, totalTestsFailures, totalTestsErrors, totalTestsSkipped, totalTestsRun, successPercentage));
