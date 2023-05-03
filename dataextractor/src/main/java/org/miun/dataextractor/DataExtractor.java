@@ -2,6 +2,7 @@ package org.miun.dataextractor;
 
 import java.io.*;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.jsoup.Jsoup;
@@ -26,17 +27,46 @@ public class DataExtractor {
     private static final String DECOUPLING_LEVEL = "Decoupling Level";
     private static final String PROPAGATION_COST = "Propagation Cost";
 
+    private static final Comparator<String> dateComparator = (d1, d2) -> {
+        LocalDate localDate1 = LocalDate.parse(d1);
+        LocalDate localDate2 = LocalDate.parse(d2);
+        return localDate1.compareTo(localDate2);
+    };
+
     public void generateOutputFiles() throws IOException {
         File snapshotResults = new File(RESULTS_DIRECTORY);
 
         for (File project : Objects.requireNonNull(snapshotResults.listFiles(File::isDirectory))) {
+            TreeMap<String, List<String>> sortedMap = new TreeMap<>(dateComparator);
             for (File snapshot : Objects.requireNonNull(project.listFiles(File::isDirectory))) {
                 Map<String, Map<String, Integer>> systemSmells = getSystemSmells(snapshot);
                 Map<String, List<TypeMetricsData>> systemFanInFanOutData = getSystemFanInFanOutData(snapshot);
                 Map<String, List<TestCoverageData>> systemTestCoverageData = getSystemTestCoverageData(snapshot);
                 double decouplingLevel = getSystemMetric(snapshot, DECOUPLING_LEVEL);
                 double propagationCost = getSystemMetric(snapshot, PROPAGATION_COST);
-                writeToCsv(new File(snapshot, "output.csv"), systemSmells, systemFanInFanOutData, systemTestCoverageData, decouplingLevel, propagationCost);
+                writeToOutputCsv(new File(snapshot, "output.csv"), systemSmells, systemFanInFanOutData, systemTestCoverageData, decouplingLevel, propagationCost);
+
+                File testData = new File(snapshot, "testdata.csv");
+                String line;
+                try (BufferedReader br = new BufferedReader(new FileReader(testData))) {
+                    br.readLine();  // skip header
+                    while ((line = br.readLine()) != null) {
+                        List<String> values = new ArrayList<>(Arrays.asList(line.split(",")));
+                        sortedMap.put(snapshot.getName(), values);
+                    }
+                }
+            }
+            writeTestDataSummary(project, sortedMap);
+        }
+    }
+
+    private void writeTestDataSummary(File project, TreeMap<String, List<String>> testDataSorted) throws IOException {
+        File testDataSummary = new File(project, "testdata-summary.csv");
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(testDataSummary))) {
+            bw.write("Date,SuccessfulTests,FailedTests,ErrorTests,SkippedTests,TotalTests,PercentageOfSuccessfulTests\n");
+            for (Map.Entry<String, List<String>> entry : testDataSorted.entrySet()) {
+                bw.write(entry.getKey() + "," + String.join(",", entry.getValue()));
+                bw.newLine();
             }
         }
     }
@@ -161,10 +191,10 @@ public class DataExtractor {
         throw new IllegalStateException("Metric not found in the HTML content");
     }
 
-    private static void writeToCsv(File outputFile, Map<String, Map<String, Integer>> systemSmells,
-            Map<String, List<TypeMetricsData>> systemFanInFanOutData,
-            Map<String, List<TestCoverageData>> systemTestCoverageData,
-            double decouplingLevel, double propagationCost) {
+    private static void writeToOutputCsv(File outputFile, Map<String, Map<String, Integer>> systemSmells,
+                                         Map<String, List<TypeMetricsData>> systemFanInFanOutData,
+                                         Map<String, List<TestCoverageData>> systemTestCoverageData,
+                                         double decouplingLevel, double propagationCost) {
         String filePath = outputFile.getAbsolutePath();
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
