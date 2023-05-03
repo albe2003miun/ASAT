@@ -198,21 +198,10 @@ public class DataExtractor {
         String filePath = outputFile.getAbsolutePath();
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
-            List<String> header = new ArrayList<>();
-            header.add("Namespace");
-            List<String> uniqueSmells = getUniqueSmells(systemSmells);
-            header.addAll(uniqueSmells);
-            header.add("Total Smells");
-            header.add("PC");
-            header.add("DL");
-            header.add("Code Coverage");
-            header.add("LOC");
-            header.add("Nr. of Classes");
-            bw.write(String.join(",", header));
-            bw.newLine();
+            writeHeader(bw);
 
             Map<String, Integer> systemSmellCounts = new HashMap<>();
-            for (String uniqueSmell : uniqueSmells) {
+            for (String uniqueSmell : ARCHITECTURAL_SMELLS) {
                 systemSmellCounts.put(uniqueSmell, 0);
             }
             int totalInstructionCovered = 0;
@@ -222,7 +211,7 @@ public class DataExtractor {
             for (Map.Entry<String, List<TypeMetricsData>> entry : systemFanInFanOutData.entrySet()) {
                 List<String> rowData = new ArrayList<>();
                 rowData.add(entry.getKey());  // package name
-                List<String> smellData = getPackageSmells(systemSmells, uniqueSmells, systemSmellCounts, entry.getKey());
+                List<String> smellData = getPackageSmells(systemSmells, systemSmellCounts, entry.getKey());
                 rowData.addAll(smellData);
                 int totalPackageSmells = smellData.stream().mapToInt(Integer::parseInt).sum();
                 rowData.add(Integer.toString(totalPackageSmells));
@@ -259,12 +248,12 @@ public class DataExtractor {
             // add smells detected for all packages here since they are not included elsewhere
             if (systemSmells.containsKey(ALL_PACKAGES_KEY)) {
                 systemSmellData.addAll(getPackageSmells(
-                        systemSmells, uniqueSmells, systemSmellCounts, ALL_PACKAGES_KEY));
+                        systemSmells, systemSmellCounts, ALL_PACKAGES_KEY));
             }
 
-            for (int i = 0; i < uniqueSmells.size(); i++) {
+            for (int i = 0; i < ARCHITECTURAL_SMELLS.size(); i++) {
                 systemSmellData.set(i, String.valueOf(
-                        systemSmellCounts.get(uniqueSmells.get(i))
+                        systemSmellCounts.get(ARCHITECTURAL_SMELLS.get(i))
                 ));
             }
             systemData.addAll(systemSmellData);
@@ -283,17 +272,30 @@ public class DataExtractor {
         }
     }
 
+    private static void writeHeader(BufferedWriter bw) throws IOException {
+        List<String> header = new ArrayList<>();
+        header.add("Namespace");
+        header.addAll(ARCHITECTURAL_SMELLS);
+        header.add("Total Smells");
+        header.add("PC");
+        header.add("DL");
+        header.add("Code Coverage");
+        header.add("LOC");
+        header.add("Nr. of Classes");
+        bw.write(String.join(",", header));
+        bw.newLine();
+    }
+
     // also puts the smells into SystemSmellCounts
     private static List<String> getPackageSmells(
             Map<String, Map<String, Integer>> systemSmells,
-            List<String> uniqueSmells,
             Map<String, Integer> systemSmellCounts,
             String entry
     ) {
         List<String> smellData = new ArrayList<>();
         Map<String, Integer> smellCounts = systemSmells.get(entry);
 
-        for (String smell : uniqueSmells) {
+        for (String smell : ARCHITECTURAL_SMELLS) {
             if (smellCounts == null) {
                 smellData.add(Integer.toString(0));
             } else {
@@ -304,15 +306,5 @@ public class DataExtractor {
         }
 
         return smellData;
-    }
-
-    private static List<String> getUniqueSmells(Map<String, Map<String, Integer>> systemSmells) {
-        Set<String> uniqueSmells = new HashSet<>();
-        for (Map<String, Integer> smellMap : systemSmells.values()) {
-            uniqueSmells.addAll(smellMap.keySet());
-        }
-        List<String> header = new ArrayList<>(uniqueSmells);
-        Collections.sort(header); // Optional: sort header alphabetically
-        return header;
     }
 }
