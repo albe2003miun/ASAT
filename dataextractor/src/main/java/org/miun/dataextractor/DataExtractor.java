@@ -185,7 +185,11 @@ public class DataExtractor {
                 int relativeEndIndex = listItemText.substring(startIndex).indexOf("%");
                 int endIndex = startIndex + relativeEndIndex;
                 String metricText = listItemText.substring(startIndex, endIndex).trim();
-                return Double.parseDouble(metricText.replace(",","."));
+                try {
+                    return Double.parseDouble(metricText.replace(",","."));
+                } catch (NumberFormatException e) {
+                    return -1.0;
+                }
             }
         }
         throw new IllegalStateException("Metric not found in the HTML content");
@@ -252,7 +256,7 @@ public class DataExtractor {
             }
 
             for (int i = 0; i < ARCHITECTURAL_SMELLS.size(); i++) {
-                systemSmellData.set(i, String.valueOf(
+                systemSmellData.add(String.valueOf(
                         systemSmellCounts.get(ARCHITECTURAL_SMELLS.get(i))
                 ));
             }
