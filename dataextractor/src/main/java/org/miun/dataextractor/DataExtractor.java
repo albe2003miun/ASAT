@@ -256,7 +256,7 @@ public class DataExtractor {
             }
 
             for (int i = 0; i < ARCHITECTURAL_SMELLS.size(); i++) {
-                systemSmellData.add(String.valueOf(
+                systemSmellData.add(i, String.valueOf(
                         systemSmellCounts.get(ARCHITECTURAL_SMELLS.get(i))
                 ));
             }
