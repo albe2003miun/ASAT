@@ -144,6 +144,9 @@ public class SnapshotAnalyzer {
                     String moduleName = element.getTextContent();
                     File moduleDir = new File(repoDir, moduleName);
                     modules.add(moduleDir);
+
+                    // recursively add all submodules
+                    modules.addAll(findModules(moduleDir));
                 }
             }
         } catch (ParserConfigurationException | SAXException | IOException e) {
