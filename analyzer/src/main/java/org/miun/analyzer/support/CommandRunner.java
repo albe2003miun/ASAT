@@ -1,6 +1,7 @@
 package org.miun.analyzer.support;
 
 import java.io.*;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -61,7 +62,7 @@ public class CommandRunner {
 
                         int totalSuccessfulTests = totalTestsRun - totalTestsFailures - totalTestsErrors - totalTestsSkipped;
                         double successPercentage = totalTestsRun != 0 ? ((double) totalSuccessfulTests / totalTestsRun) * 100 : -1.0;
-                        writer.write(String.format("%d,%d,%d,%d,%d,%.2f", totalSuccessfulTests, totalTestsFailures, totalTestsErrors, totalTestsSkipped, totalTestsRun, successPercentage));
+                        writer.write(String.format(Locale.US, "%d,%d,%d,%d,%d,%.2f", totalSuccessfulTests, totalTestsFailures, totalTestsErrors, totalTestsSkipped, totalTestsRun, successPercentage));
                         writer.close();
                     } catch (IOException e) {
                         e.printStackTrace();
