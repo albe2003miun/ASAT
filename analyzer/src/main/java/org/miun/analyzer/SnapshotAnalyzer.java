@@ -108,7 +108,7 @@ public class SnapshotAnalyzer {
         String command1 = String.format("mvn clean test -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dmaven.test.failure.ignore=true -Djacoco.skip=false -Djacoco.dataFile=target/jacoco.exec -DargLine=\"-javaagent:%s=destfile=target/jacoco.exec\"", JACOCO_AGENT_PATH);
         CommandRunner.runTestCommand(command1, repoDir, new File(baseOutputDirectory, "testdata.csv"));
 
-        List<File> modules = findModules(repoDir);
+        List<File> modules = findModules(repoDir, new ArrayList<>());
         File resultsDirectory = new File(baseOutputDirectory, "JacocoResults");
         if (!resultsDirectory.exists()) {
             resultsDirectory.mkdirs();
@@ -126,12 +126,14 @@ public class SnapshotAnalyzer {
         }
     }
 
-    private static List<File> findModules(File repoDir) {
-        List<File> modules = new ArrayList<>();
+    private static List<File> findModules(File repoDir, List<File> modules) {
         File pomFile = new File(repoDir, "pom.xml");
         try {
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+
+            if (!pomFile.exists()) return modules;
+
             Document doc = dBuilder.parse(pomFile);
             doc.getDocumentElement().normalize();
 
@@ -143,10 +145,12 @@ public class SnapshotAnalyzer {
                     Element element = (Element) node;
                     String moduleName = element.getTextContent();
                     File moduleDir = new File(repoDir, moduleName);
-                    modules.add(moduleDir);
+
+                    if (!moduleDir.exists()) break;
+                    if (!modules.contains(moduleDir)) modules.add(moduleDir);
 
                     // recursively add all submodules
-                    modules.addAll(findModules(moduleDir));
+                    findModules(moduleDir, modules);
                 }
             }
         } catch (ParserConfigurationException | SAXException | IOException e) {
