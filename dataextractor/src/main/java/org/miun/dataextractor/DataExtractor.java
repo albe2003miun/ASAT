@@ -247,20 +247,7 @@ public class DataExtractor {
 
             List<String> systemData = new ArrayList<>();
             systemData.add("all (includes smells in all packages)");
-            List<String> systemSmellData = new ArrayList<>();
-
-            // add smells detected for all packages here since they are not included elsewhere
-            if (systemSmells.containsKey(ALL_PACKAGES_KEY)) {
-                systemSmellData.addAll(getPackageSmells(
-                        systemSmells, systemSmellCounts, ALL_PACKAGES_KEY));
-            }
-
-            for (int i = 0; i < ARCHITECTURAL_SMELLS.size(); i++) {
-                systemSmellData.add(i, String.valueOf(
-                        systemSmellCounts.get(ARCHITECTURAL_SMELLS.get(i))
-                ));
-            }
-            systemData.addAll(systemSmellData);
+            systemData.addAll(getProjectSmells(systemSmells, systemSmellCounts));
             systemData.add(Integer.toString(systemSmellCounts.values().stream().mapToInt(Integer::intValue).sum()));
             systemData.add(String.format(Locale.US, "%.2f%%", propagationCost));
             systemData.add(String.format(Locale.US, "%.2f%%", decouplingLevel));
@@ -291,11 +278,9 @@ public class DataExtractor {
     }
 
     // also puts the smells into SystemSmellCounts
-    private static List<String> getPackageSmells(
-            Map<String, Map<String, Integer>> systemSmells,
-            Map<String, Integer> systemSmellCounts,
-            String entry
-    ) {
+    private static List<String> getPackageSmells(Map<String, Map<String, Integer>> systemSmells,
+                                                 Map<String, Integer> systemSmellCounts,
+                                                 String entry) {
         List<String> smellData = new ArrayList<>();
         Map<String, Integer> smellCounts = systemSmells.get(entry);
 
@@ -310,5 +295,30 @@ public class DataExtractor {
         }
 
         return smellData;
+    }
+
+    private static List<String> getProjectSmells(Map<String, Map<String, Integer>> systemSmells,
+                                                 Map<String, Integer> systemSmellCounts) {
+        List<String> systemSmellData = new ArrayList<>();
+
+        if (!systemSmells.containsKey(ALL_PACKAGES_KEY)) {
+            for (int i = 0; i < ARCHITECTURAL_SMELLS.size(); i++) {
+                systemSmellData.add(i, String.valueOf(
+                        systemSmellCounts.get(ARCHITECTURAL_SMELLS.get(i))
+                ));
+            }
+            return systemSmellData;
+        }
+
+        // add smells detected for all packages here since they are not included elsewhere
+        systemSmellData.addAll(getPackageSmells(
+                systemSmells, systemSmellCounts, ALL_PACKAGES_KEY));
+
+        for (int i = 0; i < ARCHITECTURAL_SMELLS.size(); i++) {
+            systemSmellData.set(i, String.valueOf(
+                    systemSmellCounts.get(ARCHITECTURAL_SMELLS.get(i))
+            ));
+        }
+        return systemSmellData;
     }
 }
