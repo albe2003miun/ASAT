@@ -57,6 +57,7 @@ public class DataExtractor {
                 }
             }
             writeTestDataSummary(project, sortedMap);
+            writeCombinedPackagesToCsv(snapshotResults);
         }
     }
 
@@ -320,5 +321,58 @@ public class DataExtractor {
             ));
         }
         return systemSmellData;
+    }
+
+    private void writeCombinedPackagesToCsv(File snapShotResultsDirectory)
+            throws IOException {
+        for (File project : Objects.requireNonNull(snapShotResultsDirectory.listFiles(File::isDirectory))) {
+            Map<String, List<String>> combinedPackages = new HashMap<>();
+
+            for (File snapshot : Objects.requireNonNull(project.listFiles(File::isDirectory))) {
+                String date = snapshot.getName();
+                String input = snapshot.getAbsolutePath() + "/output.csv";
+                BufferedReader reader = new BufferedReader(new FileReader(input));
+                String header = reader.readLine();
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String[] columns = line.split(",");
+                    String packageName = columns[0];
+
+                    if (!combinedPackages.containsKey(packageName)) {
+                        List<String> packageData = new ArrayList<>();
+                        packageData.add("date" + header.substring(header.indexOf(",")));
+                        combinedPackages.put(packageName, packageData);
+                    }
+
+                    StringJoiner snapshotData = new StringJoiner(",");
+                    snapshotData.add(date);
+                    for (int i = 1; i < columns.length; i++) snapshotData.add(columns[i]);
+                    combinedPackages.get(packageName).add(snapshotData.toString());
+                }
+
+                reader.close();
+            }
+
+            for (String packageName : combinedPackages.keySet()) {
+                File output = new File(project, packageName + ".csv");
+                BufferedWriter writer = new BufferedWriter(new FileWriter(output));
+
+                // make sure the dates are in order before writing to csv file
+                for (List<String> list : combinedPackages.values()) {
+                    list.subList(1, list.size()).sort((s1, s2) -> {
+                        String date1 = s1.substring(0, s1.indexOf(","));
+                        String date2 = s2.substring(0, s2.indexOf(","));
+                        return dateComparator.compare(date1, date2);
+                    });
+                }
+
+                for (String line : combinedPackages.get(packageName)) {
+                    writer.write(line + "\n");
+                }
+
+                writer.close();
+            }
+        }
     }
 }
