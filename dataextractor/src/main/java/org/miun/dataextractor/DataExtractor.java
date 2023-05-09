@@ -46,7 +46,8 @@ public class DataExtractor {
                 Map<String, List<TestCoverageData>> systemTestCoverageData = getSystemTestCoverageData(snapshot);
                 double decouplingLevel = getSystemMetric(snapshot, DECOUPLING_LEVEL);
                 double propagationCost = getSystemMetric(snapshot, PROPAGATION_COST);
-                writeToOutputCsv(new File(snapshot, "output.csv"), systemSmells, systemFanInFanOutData, systemTestCoverageData, decouplingLevel, propagationCost);
+                double averageDegree = getDenseStructureAverageDegree(snapshot);
+                writeToOutputCsv(new File(snapshot, "output.csv"), systemSmells, systemFanInFanOutData, systemTestCoverageData, decouplingLevel, propagationCost, averageDegree);
 
                 File testData = new File(snapshot, "testdata.csv");
                 String line;
@@ -223,7 +224,8 @@ public class DataExtractor {
     private static void writeToOutputCsv(File outputFile, Map<String, Map<String, Integer>> systemSmells,
                                          Map<String, List<TypeMetricsData>> systemFanInFanOutData,
                                          Map<String, List<TestCoverageData>> systemTestCoverageData,
-                                         double decouplingLevel, double propagationCost) {
+                                         double decouplingLevel, double propagationCost,
+                                         double averageDegree) {
         String filePath = outputFile.getAbsolutePath();
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
@@ -244,6 +246,7 @@ public class DataExtractor {
                 rowData.addAll(smellData);
                 int totalPackageSmells = smellData.stream().mapToInt(Integer::parseInt).sum();
                 rowData.add(Integer.toString(totalPackageSmells));
+                rowData.add("");
                 rowData.add("");
                 rowData.add("");
                 List<TestCoverageData> packageTestCoverageData = systemTestCoverageData.get(entry.getKey());
@@ -274,6 +277,7 @@ public class DataExtractor {
             systemData.add("all (includes smells in all packages)");
             systemData.addAll(getProjectSmells(systemSmells, systemSmellCounts));
             systemData.add(Integer.toString(systemSmellCounts.values().stream().mapToInt(Integer::intValue).sum()));
+            systemData.add(String.format(Locale.US, "%.2f%%", averageDegree));
             systemData.add(String.format(Locale.US, "%.2f%%", propagationCost));
             systemData.add(String.format(Locale.US, "%.2f%%", decouplingLevel));
             double codeCoverage = (double) (totalInstructionCovered * 100) / (totalInstructionCovered + totalInstructionMissed);
@@ -293,6 +297,7 @@ public class DataExtractor {
         header.add("Namespace");
         header.addAll(ARCHITECTURAL_SMELLS);
         header.add("Total Smells");
+        header.add("DS avg. degree");
         header.add("PC");
         header.add("DL");
         header.add("Code Coverage");
