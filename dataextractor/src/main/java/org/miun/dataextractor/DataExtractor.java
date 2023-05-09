@@ -277,7 +277,7 @@ public class DataExtractor {
             systemData.add("all (includes smells in all packages)");
             systemData.addAll(getProjectSmells(systemSmells, systemSmellCounts));
             systemData.add(Integer.toString(systemSmellCounts.values().stream().mapToInt(Integer::intValue).sum()));
-            systemData.add(String.format(Locale.US, "%.2f%%", averageDegree));
+            systemData.add(String.format(Locale.US, "%.2f", averageDegree));
             systemData.add(String.format(Locale.US, "%.2f%%", propagationCost));
             systemData.add(String.format(Locale.US, "%.2f%%", decouplingLevel));
             double codeCoverage = (double) (totalInstructionCovered * 100) / (totalInstructionCovered + totalInstructionMissed);
