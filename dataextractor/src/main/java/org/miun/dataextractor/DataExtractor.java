@@ -1,6 +1,8 @@
 package org.miun.dataextractor;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
@@ -194,6 +196,28 @@ public class DataExtractor {
             }
         }
         throw new IllegalStateException("Metric not found in the HTML content");
+    }
+
+    private static double getDenseStructureAverageDegree(File snapshot) {
+        double averageDegree = 0.0;
+        Path architectureSmellsCsvPath = Paths.get(snapshot.getPath(), "DesigniteResults", "ArchitectureSmells.csv");
+
+        try {
+            String data = Files.readString(architectureSmellsCsvPath);
+            if (data.contains("Dense Structure")) {
+                String textMatch = "Average degree = ";
+                String numberPattern = "d.dd";
+                int startIndex = data.indexOf(textMatch) + textMatch.length();
+                int endIndex = startIndex
+                             + numberPattern.length() - 1
+                             + data.substring(startIndex).indexOf(".");
+                averageDegree = Double.parseDouble(data.substring(startIndex, endIndex));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return averageDegree;
     }
 
     private static void writeToOutputCsv(File outputFile, Map<String, Map<String, Integer>> systemSmells,
