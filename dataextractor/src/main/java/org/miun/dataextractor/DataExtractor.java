@@ -207,11 +207,11 @@ public class DataExtractor {
             String data = Files.readString(architectureSmellsCsvPath);
             if (data.contains("Dense Structure")) {
                 String textMatch = "Average degree = ";
-                String numberPattern = "d.dd";
+                int numberPattern = "d.d".length();
                 int startIndex = data.indexOf(textMatch) + textMatch.length();
                 int endIndex = startIndex
-                             + numberPattern.length() - 1
-                             + data.substring(startIndex).indexOf(".");
+                             + numberPattern - 1
+                             + data.substring(startIndex + numberPattern - 1).indexOf(".");
                 averageDegree = Double.parseDouble(data.substring(startIndex, endIndex));
             }
         } catch (IOException e) {
