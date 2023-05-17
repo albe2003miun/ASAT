@@ -12,9 +12,11 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import static org.miun.constants.Constants.*;
 
@@ -71,6 +73,7 @@ public class SnapshotAnalyzer {
 
         analyzeWithDesignite(snapshot, snapshotResultsDirectory);
         buildProjectAndGenerateReport(snapshot, snapshotResultsDirectory);
+        analyzeWithDV8(snapshot, snapshotResultsDirectory);
     }
 
     private static void analyzeWithDesignite(File repoDir, File baseOutputDirectory) {
@@ -102,10 +105,10 @@ public class SnapshotAnalyzer {
     }
 
     private static void buildProjectAndGenerateReport(File repoDir, File baseOutputDirectory) {
-        String command1 = String.format("mvn clean test -Dmaven.test.failure.ignore=true -Djacoco.skip=false -Djacoco.dataFile=target/jacoco.exec -DargLine=\"-javaagent:%s=destfile=target/jacoco.exec\"", JACOCO_AGENT_PATH);
-        CommandRunner.runCommand(command1, repoDir);
+        String command1 = String.format("mvn clean test -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dmaven.test.failure.ignore=true -Djacoco.skip=false -Djacoco.dataFile=target/jacoco.exec -DargLine=\"-javaagent:%s=destfile=target/jacoco.exec\"", JACOCO_AGENT_PATH);
+        CommandRunner.runTestCommand(command1, repoDir, new File(baseOutputDirectory, "testdata.csv"));
 
-        List<File> modules = findModules(repoDir);
+        List<File> modules = findModules(repoDir, new ArrayList<>());
         File resultsDirectory = new File(baseOutputDirectory, "JacocoResults");
         if (!resultsDirectory.exists()) {
             resultsDirectory.mkdirs();
@@ -118,17 +121,19 @@ public class SnapshotAnalyzer {
                 File moduleReportFile = new File(resultsDirectory, moduleName + ".csv");
 
                 String reportCommand = String.format("java -jar %s report %s --classfiles %s --sourcefiles %s --csv %s", JACOCO_CLI_PATH, jacocoExecFile.getAbsolutePath(), new File(module, "target/classes").getAbsolutePath(), new File(module, "src/main/java").getAbsolutePath(), moduleReportFile.getAbsolutePath());
-                CommandRunner.runCommand(reportCommand, module);
+                CommandRunner.runStandardCommand(reportCommand, module);
             }
         }
     }
 
-    private static List<File> findModules(File repoDir) {
-        List<File> modules = new ArrayList<>();
+    private static List<File> findModules(File repoDir, List<File> modules) {
         File pomFile = new File(repoDir, "pom.xml");
         try {
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+
+            if (!pomFile.exists()) return modules;
+
             Document doc = dBuilder.parse(pomFile);
             doc.getDocumentElement().normalize();
 
@@ -140,12 +145,50 @@ public class SnapshotAnalyzer {
                     Element element = (Element) node;
                     String moduleName = element.getTextContent();
                     File moduleDir = new File(repoDir, moduleName);
-                    modules.add(moduleDir);
+
+                    if (!moduleDir.exists()) break;
+                    if (!modules.contains(moduleDir)) modules.add(moduleDir);
+
+                    // recursively add all submodules
+                    findModules(moduleDir, modules);
                 }
             }
         } catch (ParserConfigurationException | SAXException | IOException e) {
             e.printStackTrace();
         }
         return modules;
+    }
+
+    private static void analyzeWithDV8(File repoDir, File baseOutputDir) {
+        Properties properties = new Properties();
+        String resultFolder = "DV8Results";
+
+//        properties.setProperty("inputFolder", repoDir.getAbsolutePath());
+        properties.setProperty("outputFolder", baseOutputDir.getAbsolutePath());
+        properties.setProperty("projectName", resultFolder);
+        properties.setProperty("sourceType", "code");
+        properties.setProperty("sourceCodePath", repoDir.getAbsolutePath());
+        properties.setProperty("sourceCodeLanguage", "java");
+
+        // Create a temporary file with the specified prefix and suffix
+        File propertiesFile = null;
+        try {
+            propertiesFile = File.createTempFile("config", ".properties");
+        } catch (IOException e) {
+            System.err.println("Error while creating the temporary properties file: " + e.getMessage());
+            return;
+        }
+
+        // Write the properties to the file
+        try (FileOutputStream outputStream = new FileOutputStream(propertiesFile)) {
+            properties.store(outputStream, "This is a sample properties file");
+            System.out.println("Properties file created successfully.");
+        } catch (IOException e) {
+            System.err.println("Error while writing to the properties file: " + e.getMessage());
+        }
+
+        String command = String.format("%s arch-report -paramsFile %s", DV8_CONSOLE, propertiesFile.getAbsolutePath());
+
+        CommandRunner.runStandardCommand(command, repoDir);
     }
 }
