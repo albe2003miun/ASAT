@@ -2,6 +2,7 @@ package org.miun.analyzer;
 
 import org.miun.analyzer.exceptions.SnapshotResultDirectoryAlreadyExists;
 import org.miun.analyzer.support.CommandRunner;
+import org.miun.constants.Platform;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -71,9 +72,17 @@ public class SnapshotAnalyzer {
 
         snapshotResultsDirectory.mkdirs();
 
-        analyzeWithDesignite(snapshot, snapshotResultsDirectory);
-        buildProjectAndGenerateReport(snapshot, snapshotResultsDirectory);
-        analyzeWithDV8(snapshot, snapshotResultsDirectory);
+        if (ANALYZE_ARCHITECTURAL_SMELLS) {
+            analyzeWithDesignite(snapshot, snapshotResultsDirectory);
+        }
+
+        if (ANALYZE_TESTABILITY) {
+            buildProjectAndGenerateReport(snapshot, snapshotResultsDirectory);
+        }
+
+        if (ANALYZE_MODULARITY) {
+            analyzeWithDV8(snapshot, snapshotResultsDirectory);
+        }
     }
 
     private static void analyzeWithDesignite(File repoDir, File baseOutputDirectory) {
@@ -105,7 +114,7 @@ public class SnapshotAnalyzer {
     }
 
     private static void buildProjectAndGenerateReport(File repoDir, File baseOutputDirectory) {
-        String command1 = String.format("mvn clean test -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dmaven.test.failure.ignore=true -Djacoco.skip=false -Djacoco.dataFile=target/jacoco.exec -DargLine=\"-javaagent:%s=destfile=target/jacoco.exec\"", JACOCO_AGENT_PATH);
+        String command1 = String.format("%s clean test -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dmaven.test.failure.ignore=true -Djacoco.skip=false -Djacoco.dataFile=target/jacoco.exec -DargLine=\"-javaagent:%s=destfile=target/jacoco.exec\"", PLATFORM.getMvnCommand(), JACOCO_AGENT_PATH);
         CommandRunner.runTestCommand(command1, repoDir, new File(baseOutputDirectory, "testdata.csv"));
 
         List<File> modules = findModules(repoDir, new ArrayList<>());
