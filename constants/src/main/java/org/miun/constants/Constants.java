@@ -16,7 +16,9 @@ public class Constants {
     public static boolean ANALYZE_ARCHITECTURAL_SMELLS;
     public static boolean ANALYZE_TESTABILITY;
     public static boolean ANALYZE_MODULARITY;
+    public static int WEEK_INTERVAL;
     public static Platform PLATFORM;
+    public static String FAIL_IF_NO_TESTS_FOUND;
     public static List<String> OSS_PROJECTS;
 
     static {
@@ -46,6 +48,7 @@ public class Constants {
             ANALYZE_ARCHITECTURAL_SMELLS = config.getProperty("analyzeArchitecturalSmells").equalsIgnoreCase("true");
             ANALYZE_TESTABILITY = !config.getProperty("analyzeTestability").equalsIgnoreCase("false");
             ANALYZE_MODULARITY = !config.getProperty("analyzeModularity").equalsIgnoreCase("false");
+            WEEK_INTERVAL = config.getProperty("weekInterval") == null ? Integer.parseInt(config.getProperty("weekInterval")) : 4;
             PLATFORM = config.getProperty("platform").equalsIgnoreCase("linux") ? Platform.LINUX : Platform.WINDOWS;
         } catch (IOException e) {
             e.printStackTrace();
