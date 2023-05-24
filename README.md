@@ -1,5 +1,4 @@
-# ASAT
-## Architectural Smell Analysis Tool
+# ASAT (Architectural Smell Analysis Tool)
 
 ## Reproduction Package
 
